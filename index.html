@@ -3,153 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>社区运营数据看板（美观版） | 脱敏Demo</title>
+    <title>社区运营数据看板 | 脱敏Demo</title>
     <script src="https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", "Microsoft Yahei", sans-serif; }
-        body {
-            background: linear-gradient(135deg, #eef2f7 0%, #e4edf7 100%);
-            padding: 28px;
-            color: #1f2937;
-        }
+        body { background: #f0f2f5; padding: 24px; color: #252525; }
 
-        /* 顶部横幅 */
-        .banner {
-            background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 55%, #06b6d4 100%);
-            border-radius: 16px;
-            padding: 28px 36px;
-            margin-bottom: 24px;
+        /* 头部 */
+        .header {
+            background: #fff;
+            padding: 20px 28px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
         }
-        .banner h1 { color: #fff; font-size: 24px; font-weight: 600; margin-bottom: 8px; }
-        .banner p { color: rgba(255,255,255,0.82); font-size: 13px; }
-        .time-switch {
-            display: flex;
-            background: rgba(255,255,255,0.18);
-            border-radius: 10px;
-            padding: 4px;
-            backdrop-filter: blur(6px);
-        }
+        .header h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+        .time-switch { display: flex; border: 1px solid #d0d0d0; }
         .time-btn {
-            padding: 8px 22px;
-            background: transparent;
+            padding: 6px 18px;
+            background: #fff;
             border: none;
-            border-radius: 8px;
+            border-right: 1px solid #d0d0d0;
             cursor: pointer;
             font-size: 14px;
-            color: rgba(255,255,255,0.85);
-            transition: all 0.25s;
+            color: #666;
         }
-        .time-btn.active {
-            background: #fff;
-            color: #1d4ed8;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
+        .time-btn:last-child { border-right: none; }
+        .time-btn.active { background: #0078d4; color: #fff; }
 
-        /* KPI 卡片 */
+        /* 指标卡 */
         .kpi-cards {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-            margin-bottom: 22px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
         .kpi-card {
             background: #fff;
-            border-radius: 14px;
-            padding: 20px 22px;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
-            border-left: 5px solid #2563eb;
-            transition: transform 0.25s, box-shadow 0.25s;
+            padding: 18px 20px;
+            border: 1px solid #e0e0e0;
         }
-        .kpi-card:nth-child(4n+2) { border-left-color: #06b6d4; }
-        .kpi-card:nth-child(4n+3) { border-left-color: #f59e0b; }
-        .kpi-card:nth-child(4n+4) { border-left-color: #ec4899; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); }
-        .kpi-label { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
-        .kpi-value { font-size: 27px; font-weight: 700; color: #111827; margin-bottom: 8px; }
-        .kpi-change { font-size: 12px; font-weight: 500; }
-        .up { color: #059669; }
-        .down { color: #e11d48; }
+        .kpi-label { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .kpi-value { font-size: 26px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+        .kpi-change { font-size: 12px; }
+        .up { color: #107c10; }
+        .down { color: #d13438; }
 
-        /* 图表卡片 */
+        /* 图表卡片：单列 */
         .chart-box {
             background: #fff;
-            border-radius: 14px;
-            padding: 22px 26px;
-            margin-bottom: 22px;
-            height: 370px;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+            padding: 20px 24px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+            height: 360px;
         }
-        .chart-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 14px;
-            color: #111827;
-            padding-left: 10px;
-            border-left: 4px solid #2563eb;
-        }
-        .chart { width: 100%; height: calc(100% - 32px); }
+        .chart-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
+        .chart { width: 100%; height: calc(100% - 28px); }
 
-        /* 表格卡片 */
+        /* 表格卡片：单列 */
         .table-box {
             background: #fff;
-            border-radius: 14px;
-            padding: 22px 26px;
-            margin-bottom: 22px;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+            padding: 20px 24px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
         }
         .table-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 14px;
-            color: #111827;
+            margin-bottom: 12px;
+            color: #1a1a1a;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-left: 10px;
-            border-left: 4px solid #2563eb;
         }
-        .table-tip { display: flex; align-items: center; gap: 8px; border-left: none; padding: 0; }
-        .filter-label { font-size: 12px; color: #6b7280; }
+        .table-tip { font-size: 12px; color: #888; font-weight: normal; display: flex; align-items: center; gap: 6px; }
+        .filter-label { font-size: 12px; color: #888; }
         .filter-select {
-            padding: 7px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
+            padding: 5px 10px;
+            border: 1px solid #d0d0d0;
             font-size: 13px;
-            background: #f9fafb;
+            background: #fff;
             cursor: pointer;
             outline: none;
-            min-width: 115px;
-            transition: border-color 0.2s;
+            min-width: 110px;
         }
-        .filter-select:focus { border-color: #2563eb; background: #fff; }
-        .table-scroll { overflow-x: auto; max-height: 450px; overflow-y: auto; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 11px 12px; text-align: center; white-space: nowrap; }
+        .filter-select:focus { border-color: #0078d4; }
+        .table-scroll { overflow-x: auto; max-height: 440px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
+        th, td {
+            padding: 10px 12px;
+            text-align: center;
+            white-space: nowrap;
+        }
         th {
-            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            background: #f5f5f5;
             font-weight: 600;
-            color: #374151;
-            border-bottom: 2px solid #e0e7ff;
+            color: #333;
+            border-bottom: 1px solid #d0d0d0;
             position: sticky;
             top: 0;
         }
-        td { border-bottom: 1px solid #f1f5f9; cursor: pointer; }
-        tbody tr { transition: background 0.2s; }
-        tbody tr:hover { background: #eff6ff; }
-        tbody tr.active { background: #dbeafe; }
+        td { border-bottom: 1px solid #eee; cursor: pointer; }
+        tbody tr:hover { background: #f5faff; }
+        tbody tr.active { background: #e8f4ff; }
     </style>
 </head>
 <body>
-    <div class="banner">
-        <div>
-            <h1>社区板块运营数据看板</h1>
-            <p>脱敏演示数据 · 支持日 / 周 / 月维度切换与板块下钻分析</p>
-        </div>
+    <div class="header">
+        <h1>社区板块运营数据看板（脱敏版）</h1>
         <div class="time-switch">
             <button class="time-btn active" data-type="day">日</button>
             <button class="time-btn" data-type="week">周</button>
@@ -209,7 +172,7 @@
         <div class="chart" id="chart-uvpv"></div>
     </div>
     <div class="chart-box">
-        <div class="chart-title">内容生产与互动参与趋势</div>
+        <div class="chart-title">发帖量 / 互动用户数趋势</div>
         <div class="chart" id="chart-post"></div>
     </div>
     <div class="chart-box">
@@ -217,7 +180,7 @@
         <div class="chart" id="chart-pie"></div>
     </div>
     <div class="chart-box">
-        <div class="chart-title">用户粘性与使用深度趋势</div>
+        <div class="chart-title">用户使用深度趋势（人均浏览页数 / 人均停留时长）</div>
         <div class="chart" id="chart-depth"></div>
     </div>
 
@@ -281,7 +244,7 @@
     </div>
 
     <script>
-        // ==================== 模拟脱敏数据（与PowerBI版一致） ====================
+        // ==================== 模拟脱敏数据（10天，UV与PV走势分化） ====================
         const dateList = ['10-29','10-30','10-31','11-01','11-02','11-03','11-04','11-05','11-06','11-07'];
         const uvData = [10200, 10850, 11200, 10980, 11650, 12100, 11800, 12458, 13021, 12680];
         const pvData = [30600, 34720, 32480, 34038, 38445, 34485, 35990, 38371, 41016, 39435];
@@ -290,6 +253,7 @@
         const avgPagesData = [3.00, 3.20, 2.90, 3.10, 3.30, 2.85, 3.05, 3.08, 3.15, 3.11];
         const avgTimeData = [255, 268, 260, 264, 275, 258, 266, 272, 280, 275];
 
+        // 板块汇总：补全UV、分项互动、爆款数
         const categoryData = [
             { name: '经验分享', uv: 4860, posts: 86, users: 78, likes: 986, comments: 320, shares: 214, rate: '18.6%', hot: 6 },
             { name: '问题求助', uv: 3980, posts: 72, users: 65, likes: 542, comments: 410, shares: 68, rate: '14.2%', hot: 2 },
@@ -298,6 +262,7 @@
             { name: '资源分享', uv: 2840, posts: 46, users: 41, likes: 436, comments: 142, shares: 268, rate: '12.6%', hot: 3 }
         ];
 
+        // 帖子明细：12条，补全主题、帖主类型、互动率、传播系数
         const postDataList = [
             { id: 'P10098', topic: '经验总结', uid: 'U2001', utype: 'KOL', cate: '经验分享', date: '2026-11-07', views: 1380, likes: 132, comments: 35, shares: 17 },
             { id: 'P10099', topic: '日常打卡', uid: 'U2002', utype: '普通用户', cate: '日常打卡', date: '2026-11-07', views: 890, likes: 98, comments: 19, shares: 9 },
@@ -312,7 +277,7 @@
             { id: 'P10108', topic: '经验总结', uid: 'U2011', utype: 'KOL', cate: '经验分享', date: '2026-11-04', views: 1580, likes: 124, comments: 38, shares: 18 },
             { id: 'P10109', topic: '话题讨论', uid: 'U2012', utype: '普通用户', cate: '话题讨论', date: '2026-11-04', views: 1040, likes: 85, comments: 41, shares: 11 }
         ];
-        // ==================== 表格渲染与筛选联动 ====================
+        // ==================== 板块汇总表渲染 ====================
         let currentCate = '经验分享';
 
         function renderCategoryTable() {
@@ -333,11 +298,33 @@
                     <td>${item.hot}</td>
                 </tr>
             `).join('');
+
             tbody.querySelectorAll('tr').forEach(tr => {
                 tr.addEventListener('click', () => setCate(tr.dataset.cate));
             });
         }
 
+        // 初始化两个下拉筛选框
+        function initFilters() {
+            const options = ['全部板块'].concat(categoryData.map(c => c.name));
+            ['filter-cate-1', 'filter-cate-2'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
+                sel.value = currentCate;
+                sel.addEventListener('change', () => setCate(sel.value));
+            });
+        }
+
+        // 统一筛选状态：两个下拉框、汇总表、明细表联动
+        function setCate(cate) {
+            currentCate = cate;
+            document.getElementById('filter-cate-1').value = cate;
+            document.getElementById('filter-cate-2').value = cate;
+            renderCategoryTable();
+            renderPostTable(cate === '全部板块' ? null : cate);
+        }
+
+        // ==================== 帖子明细表渲染 ====================
         function renderPostTable(cate) {
             const list = cate ? postDataList.filter(p => p.cate === cate) : postDataList;
             const tbody = document.getElementById('post-body');
@@ -347,7 +334,7 @@
                 return `
                     <tr>
                         <td>${item.id}</td>
-                        <td style="white-space:normal;min-width:120px">${item.topic}</td>
+                        <td style="white-space:normal;min-width:140px">${item.topic}</td>
                         <td>${item.uid}</td>
                         <td>${item.utype}</td>
                         <td>${item.cate}</td>
@@ -362,28 +349,11 @@
             }).join('');
         }
 
-        function initFilters() {
-            const options = ['全部板块'].concat(categoryData.map(c => c.name));
-            ['filter-cate-1', 'filter-cate-2'].forEach(id => {
-                const sel = document.getElementById(id);
-                sel.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
-                sel.value = currentCate;
-                sel.addEventListener('change', () => setCate(sel.value));
-            });
-        }
+        // 通用坐标轴样式（PowerBI风格：直线、无刻度线、淡网格）
+        const axisLineStyle = { lineStyle: { color: '#999' } };
+        const splitLineStyle = { lineStyle: { color: '#eee' } };
 
-        function setCate(cate) {
-            currentCate = cate;
-            document.getElementById('filter-cate-1').value = cate;
-            document.getElementById('filter-cate-2').value = cate;
-            renderCategoryTable();
-            renderPostTable(cate === '全部板块' ? null : cate);
-        }
-
-        const splitLineStyle = { lineStyle: { color: '#f1f5f9' } };
-        const axisLineStyle = { lineStyle: { color: '#cbd5e1' } };
-
-        // ==================== 图表1：UV/PV（平滑曲线+渐变面积） ====================
+        // ==================== 图表1：UV/PV（双轴，走势已分化） ====================
         const uvChart = echarts.init(document.getElementById('chart-uvpv'));
         uvChart.setOption({
             tooltip: {
@@ -397,33 +367,21 @@
                     return s;
                 }
             },
-            legend: { data: ['UV', 'PV'], right: 10, top: 0, icon: 'roundRect' },
-            grid: { left: 82, right: 82, top: 48, bottom: 35 },
-            color: ['#2563eb', '#06b6d4'],
+            legend: { data: ['UV', 'PV'], right: 10, top: 0 },
+            grid: { left: 82, right: 82, top: 45, bottom: 35 },
+            color: ['#0078d4', '#107c10'],
             xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
             yAxis: [
                 { type: 'value', splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
                 { type: 'value', splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
             ],
             series: [
-                {
-                    name: 'UV', type: 'line', smooth: true, data: uvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 0,
-                    areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
-                        { offset: 0, color: 'rgba(37,99,235,0.35)' },
-                        { offset: 1, color: 'rgba(37,99,235,0.02)' }
-                    ])}
-                },
-                {
-                    name: 'PV', type: 'line', smooth: true, data: pvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1,
-                    areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
-                        { offset: 0, color: 'rgba(6,182,212,0.3)' },
-                        { offset: 1, color: 'rgba(6,182,212,0.02)' }
-                    ])}
-                }
+                { name: 'UV', type: 'line', data: uvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 0 },
+                { name: 'PV', type: 'line', data: pvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
             ]
         });
 
-        // ==================== 图表2：发帖量(渐变柱)/互动用户(平滑线) ====================
+        // ==================== 图表2：发帖量(柱)/互动用户数(线) ====================
         const postChart = echarts.init(document.getElementById('chart-post'));
         postChart.setOption({
             tooltip: {
@@ -437,40 +395,32 @@
                     return s;
                 }
             },
-            legend: { data: ['发帖量', '互动用户数'], right: 10, top: 0, icon: 'roundRect' },
-            grid: { left: 82, right: 82, top: 48, bottom: 35 },
-            color: ['#2563eb', '#eab308'],
+            legend: { data: ['发帖量', '互动用户数'], right: 10, top: 0 },
+            grid: { left: 82, right: 82, top: 45, bottom: 35 },
+            color: ['#0078d4', '#d83b01'],
             xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
             yAxis: [
                 { type: 'value', splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
                 { type: 'value', splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
             ],
             series: [
-                {
-                    name: '发帖量', type: 'bar', data: postData, barWidth: 22, yAxisIndex: 0,
-                    itemStyle: {
-                        color: new echarts.graphic.LinearGradient(0,0,0,1,[
-                            { offset: 0, color: '#2563eb' },
-                            { offset: 1, color: '#93c5fd' }
-                        ])
-                    }
-                },
-                { name: '互动用户数', type: 'line', smooth: true, data: interactUserData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
+                { name: '发帖量', type: 'bar', data: postData, barWidth: 22, yAxisIndex: 0 },
+                { name: '互动用户数', type: 'line', data: interactUserData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
             ]
         });
 
-        // ==================== 图表3：互动构成（现代配色，只显示百分比） ====================
+        // ==================== 图表3：互动构成（饼上只留百分比，名称看图例） ====================
         const pieChart = echarts.init(document.getElementById('chart-pie'));
         pieChart.setOption({
             tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
-            legend: { bottom: 5, left: 'center', icon: 'circle' },
-            color: ['#2563eb', '#06b6d4', '#f59e0b'],
+            legend: { bottom: 5, left: 'center' },
+            color: ['#0078d4', '#107c10', '#d83b01'],
             series: [{
                 type: 'pie',
-                radius: ['46%', '68%'],
+                radius: ['45%', '68%'],
                 center: ['50%', '46%'],
-                itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
-                label: { formatter: '{d}%', fontSize: 12, fontWeight: 600 },
+                itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                label: { formatter: '{d}%', fontSize: 12 },
                 data: [
                     { value: 1280, name: '点赞' },
                     { value: 420, name: '评论' },
@@ -479,7 +429,7 @@
             }]
         });
 
-        // ==================== 图表4：浏览页数(渐变柱)/停留时长(平滑线) ====================
+        // ==================== 图表4：浏览页数(柱)/停留时长(线) ====================
         const depthChart = echarts.init(document.getElementById('chart-depth'));
         depthChart.setOption({
             tooltip: {
@@ -493,28 +443,21 @@
                     return s;
                 }
             },
-            legend: { data: ['人均浏览页数', '人均停留时长'], right: 10, top: 0, icon: 'roundRect' },
-            grid: { left: 82, right: 82, top: 48, bottom: 35 },
-            color: ['#8b5cf6', '#059669'],
+            legend: { data: ['人均浏览页数', '人均停留时长'], right: 10, top: 0 },
+            grid: { left: 82, right: 82, top: 45, bottom: 35 },
+            color: ['#5c2d91', '#008272'],
             xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
             yAxis: [
                 { type: 'value', min: 2.6, max: 3.4, splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
                 { type: 'value', min: 245, max: 290, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
             ],
             series: [
-                {
-                    name: '人均浏览页数', type: 'bar', data: avgPagesData, barWidth: 22, yAxisIndex: 0,
-                    itemStyle: {
-                        color: new echarts.graphic.LinearGradient(0,0,0,1,[
-                            { offset: 0, color: '#8b5cf6' },
-                            { offset: 1, color: '#c4b5fd' }
-                        ])
-                    }
-                },
-                { name: '人均停留时长', type: 'line', smooth: true, data: avgTimeData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
+                { name: '人均浏览页数', type: 'bar', data: avgPagesData, barWidth: 22, yAxisIndex: 0 },
+                { name: '人均停留时长', type: 'line', data: avgTimeData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
             ]
         });
 
+        // 自适应
         window.addEventListener('resize', () => {
             uvChart.resize();
             postChart.resize();
@@ -522,7 +465,7 @@
             depthChart.resize();
         });
 
-        // 时间维度切换
+        // ==================== 时间维度切换（演示用） ====================
         document.querySelectorAll('.time-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
