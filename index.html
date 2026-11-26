@@ -3,484 +3,711 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>社区运营数据看板 | 脱敏Demo</title>
+    <title>社区运营数据看板</title>
     <script src="https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", "Microsoft Yahei", sans-serif; }
-        body { background: #f0f2f5; padding: 24px; color: #252525; }
+        body { background: #f4f6fa; padding: 24px; color: #1f2937; }
 
-        /* 头部 */
+        /* ===== 头部 ===== */
         .header {
-            background: #fff;
-            padding: 20px 28px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 100%);
+            padding: 20px 30px; border-radius: 10px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; gap: 16px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
         }
-        .header h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; }
-        .time-switch { display: flex; border: 1px solid #d0d0d0; }
+        .header h1 { font-size: 21px; font-weight: 600; color: #fff; letter-spacing: 0.5px; }
+        .header-sub { font-size: 12px; color: #c7d7fe; margin-top: 5px; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .header-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .header-period { font-size: 12px; color: #fff; }
+        .date-range { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #dbe7ff; }
+        .date-range input {
+            padding: 7px 8px; border: none; border-radius: 6px; font-size: 13px;
+            background: #fff; color: #1f2937; outline: none; cursor: pointer;
+        }
+        .global-select {
+            padding: 8px 12px; border: none; border-radius: 6px; font-size: 13px;
+            background: #fff; cursor: pointer; outline: none; min-width: 130px; color: #1f2937;
+        }
+        .time-switch { display: flex; border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; overflow: hidden; }
         .time-btn {
-            padding: 6px 18px;
-            background: #fff;
-            border: none;
-            border-right: 1px solid #d0d0d0;
-            cursor: pointer;
-            font-size: 14px;
-            color: #666;
+            padding: 8px 18px; background: transparent; border: none;
+            border-right: 1px solid rgba(255,255,255,0.4); cursor: pointer;
+            font-size: 13px; color: #dbe7ff;
         }
         .time-btn:last-child { border-right: none; }
-        .time-btn.active { background: #0078d4; color: #fff; }
+        .time-btn.active { background: #fff; color: #1d4ed8; font-weight: 600; }
+        .range-hint { font-size: 12px; color: #dc2626; min-height: 16px; margin: 0 2px 14px; }
 
-        /* 指标卡 */
-        .kpi-cards {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-        }
+        /* ===== 分区标题 ===== */
+        .section { margin-bottom: 24px; }
+        .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .section-bar { width: 4px; height: 18px; background: #2563eb; border-radius: 2px; }
+        .section-title { font-size: 16px; font-weight: 600; color: #111827; }
+        .section-meta { font-size: 12px; color: #6b7280; margin-left: auto; }
+
+        /* ===== KPI 分组 ===== */
+        .kpi-groups { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .kpi-group { display: flex; flex-direction: column; gap: 12px; }
+        .group-label { font-size: 12px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 6px; }
+        .group-dot { width: 7px; height: 7px; border-radius: 50%; }
         .kpi-card {
-            background: #fff;
-            padding: 18px 20px;
-            border: 1px solid #e0e0e0;
+            background: #fff; padding: 16px 18px; border-radius: 8px; border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: box-shadow 0.15s; flex: 1;
         }
-        .kpi-label { font-size: 13px; color: #666; margin-bottom: 8px; }
-        .kpi-value { font-size: 26px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
-        .kpi-change { font-size: 12px; }
-        .up { color: #107c10; }
-        .down { color: #d13438; }
+        .kpi-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.09); }
+        .kpi-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .kpi-info {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; border-radius: 50%; border: 1px solid #9ca3af;
+            color: #6b7280; font-size: 10px; cursor: help; flex: none;
+        }
+        .kpi-value { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+        .kpi-foot { font-size: 12px; color: #6b7280; display: flex; gap: 8px; align-items: center; }
+        .kpi-change { font-weight: 600; }
+        .up { color: #059669; }
+        .down { color: #dc2626; }
+        .flat { color: #6b7280; }
 
-        /* 图表卡片：单列 */
+        /* ===== 图表卡片 ===== */
         .chart-box {
-            background: #fff;
-            padding: 20px 24px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 20px;
-            height: 360px;
+            background: #fff; padding: 20px 24px; border-radius: 8px; border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px; height: 340px;
         }
-        .chart-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
-        .chart { width: 100%; height: calc(100% - 28px); }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .chart-row .chart-box { margin-bottom: 0; height: 320px; }
+        .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #111827; }
+        .chart { width: 100%; height: calc(100% - 26px); }
 
-        /* 表格卡片：单列 */
+        /* ===== 表格 ===== */
         .table-box {
-            background: #fff;
-            padding: 20px 24px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 20px;
+            background: #fff; padding: 20px 24px; border-radius: 8px; border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px;
         }
-        .table-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #1a1a1a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .table-tip { font-size: 12px; color: #888; font-weight: normal; display: flex; align-items: center; gap: 6px; }
-        .filter-label { font-size: 12px; color: #888; }
-        .filter-select {
-            padding: 5px 10px;
-            border: 1px solid #d0d0d0;
-            font-size: 13px;
-            background: #fff;
-            cursor: pointer;
-            outline: none;
-            min-width: 110px;
-        }
-        .filter-select:focus { border-color: #0078d4; }
-        .table-scroll { overflow-x: auto; max-height: 440px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
-        th, td {
-            padding: 10px 12px;
-            text-align: center;
-            white-space: nowrap;
-        }
+        .table-title { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .table-scroll { overflow: auto; max-height: 440px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
         th {
-            background: #f5f5f5;
-            font-weight: 600;
-            color: #333;
-            border-bottom: 1px solid #d0d0d0;
-            position: sticky;
-            top: 0;
+            background: #f3f4f6; font-weight: 600; color: #374151; position: sticky; top: 0; z-index: 1;
+            border-bottom: 1px solid #e5e7eb;
         }
-        td { border-bottom: 1px solid #eee; cursor: pointer; }
-        tbody tr:hover { background: #f5faff; }
-        tbody tr.active { background: #e8f4ff; }
+        td { border-bottom: 1px solid #f3f4f6; }
+        tbody tr:hover { background: #eff6ff; }
+        tbody tr.selectable { cursor: pointer; }
+        tbody tr.active { background: #dbeafe; }
+        .cell-up { color: #059669; }
+        .cell-down { color: #dc2626; }
+
+        @media (max-width: 1200px) {
+            .kpi-groups { grid-template-columns: repeat(2, 1fr); }
+            .chart-row { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; }
+            .header-right { align-items: flex-start; }
+            .header-controls { justify-content: flex-start; }
+        }
     </style>
 </head>
 <body>
+    <!-- ===== 头部：全局筛选 ===== -->
     <div class="header">
-        <h1>社区板块运营数据看板（脱敏版）</h1>
-        <div class="time-switch">
-            <button class="time-btn active" data-type="day">日</button>
-            <button class="time-btn" data-type="week">周</button>
-            <button class="time-btn" data-type="month">月</button>
+        <div>
+            <h1>社区运营数据看板</h1>
+            <div class="header-sub">数据区间 2025-11-01 ~ 2026-11-23 · 数据已脱敏，仅供演示</div>
+        </div>
+        <div class="header-right">
+            <div class="header-controls">
+                <div class="date-range">
+                    <input type="date" id="date-start"> <span>至</span> <input type="date" id="date-end">
+                </div>
+                <select class="global-select" id="global-cate" title="板块筛选"></select>
+                <div class="time-switch">
+                    <button class="time-btn active" data-type="day">日</button>
+                    <button class="time-btn" data-type="week">周</button>
+                    <button class="time-btn" data-type="month">月</button>
+                </div>
+            </div>
+            <span class="header-period" id="header-period"></span>
+        </div>
+    </div>
+    <div class="range-hint" id="range-hint"></div>
+
+    <!-- ===== 第一层：核心指标 ===== -->
+    <div class="section">
+        <div class="section-head">
+            <span class="section-bar"></span>
+            <span class="section-title">核心指标</span>
+            <span class="section-meta">鼠标悬停 i 可查看指标口径</span>
+        </div>
+        <div class="kpi-groups" id="kpi-groups"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-head">
+            <span class="section-bar"></span>
+            <span class="section-title">指标趋势</span>
+            <span class="section-meta">带 * 的为不完整周期（被所选日期区间截断）</span>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">流量趋势</div>
+            <div class="chart" id="chart-uvpv"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">浏览深度</div>
+            <div class="chart" id="chart-depth"></div>
+        </div>
+        <div class="chart-row">
+            <div class="chart-box">
+                <div class="chart-title">互动趋势</div>
+                <div class="chart" id="chart-interact"></div>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">互动行为构成</div>
+                <div class="chart" id="chart-pie"></div>
+            </div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">内容生产趋势</div>
+            <div class="chart" id="chart-post"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">用户留存</div>
+            <div class="chart" id="chart-retention"></div>
         </div>
     </div>
 
-    <!-- KPI 第一层：大盘概览 -->
-    <div class="kpi-cards">
-        <div class="kpi-card">
-            <div class="kpi-label">社区UV</div>
-            <div class="kpi-value" id="kpi-uv">12,680</div>
-            <div class="kpi-change up">环比 ↑ 6.4%</div>
+    <!-- ===== 第二层：板块对比 ===== -->
+    <div class="section">
+        <div class="section-head">
+            <span class="section-bar" style="background:#d97706"></span>
+            <span class="section-title">板块对比</span>
+            <span class="section-meta" id="board-meta"></span>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">平台渗透率</div>
-            <div class="kpi-value" id="kpi-penetrate">24.1%</div>
-            <div class="kpi-change up">环比 ↑ 1.2%</div>
+        <div class="chart-box" style="height:300px">
+            <div class="chart-title">各板块互动率</div>
+            <div class="chart" id="chart-cate-bar"></div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">发帖用户数</div>
-            <div class="kpi-value" id="kpi-post-user">332</div>
-            <div class="kpi-change up">环比 ↑ 4.8%</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">社区互动率</div>
-            <div class="kpi-value" id="kpi-rate">17.2%</div>
-            <div class="kpi-change down">环比 ↓ 0.8%</div>
-        </div>
-    </div>
-    <div class="kpi-cards">
-        <div class="kpi-card">
-            <div class="kpi-label">人均停留时长</div>
-            <div class="kpi-value" id="kpi-time">4分35秒</div>
-            <div class="kpi-change up">环比 ↑ 3.2%</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">人均浏览页数</div>
-            <div class="kpi-value" id="kpi-pages">3.11</div>
-            <div class="kpi-change up">环比 ↑ 2.1%</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">人均发帖数</div>
-            <div class="kpi-value" id="kpi-avg-post">1.13</div>
-            <div class="kpi-change down">环比 ↓ 0.3%</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">人均互动次数</div>
-            <div class="kpi-value" id="kpi-avg-interact">2.52</div>
-            <div class="kpi-change up">环比 ↑ 3.9%</div>
+        <div class="table-box">
+            <div class="table-title">板块指标明细</div>
+            <div class="table-scroll" style="max-height:none">
+                <table id="category-table">
+                    <thead>
+                        <tr>
+                            <th>板块</th>
+                            <th>UV</th>
+                            <th>UV 环比</th>
+                            <th>发帖量</th>
+                            <th>发帖用户数</th>
+                            <th>获赞</th>
+                            <th>评论</th>
+                            <th>分享</th>
+                            <th>互动率</th>
+                            <th>爆款帖数（赞≥100）</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- 图表区 -->
-    <div class="chart-box">
-        <div class="chart-title">UV / PV 流量趋势</div>
-        <div class="chart" id="chart-uvpv"></div>
-    </div>
-    <div class="chart-box">
-        <div class="chart-title">发帖量 / 互动用户数趋势</div>
-        <div class="chart" id="chart-post"></div>
-    </div>
-    <div class="chart-box">
-        <div class="chart-title">互动行为构成</div>
-        <div class="chart" id="chart-pie"></div>
-    </div>
-    <div class="chart-box">
-        <div class="chart-title">用户使用深度趋势（人均浏览页数 / 人均停留时长）</div>
-        <div class="chart" id="chart-depth"></div>
-    </div>
-
-    <!-- 表格区 -->
-    <div class="table-box">
-        <div class="table-title">
-            内容板块汇总
-            <span class="table-tip">
-                <span class="filter-label">板块筛选</span>
-                <select class="filter-select" id="filter-cate-1"></select>
-            </span>
+    <!-- ===== 第三层：帖子明细 ===== -->
+    <div class="section">
+        <div class="section-head">
+            <span class="section-bar" style="background:#7c3aed"></span>
+            <span class="section-title">帖子明细</span>
+            <span class="section-meta" id="post-meta"></span>
         </div>
-        <div class="table-scroll">
-            <table id="category-table">
-                <thead>
-                    <tr>
-                        <th>内容板块</th>
-                        <th>板块UV</th>
-                        <th>发帖量</th>
-                        <th>发帖用户数</th>
-                        <th>总获赞数</th>
-                        <th>总评论数</th>
-                        <th>总分享数</th>
-                        <th>互动率</th>
-                        <th>爆款帖数(赞≥100)</th>
-                    </tr>
-                </thead>
-                <tbody id="category-body"></tbody>
-            </table>
-        </div>
-    </div>
-    <div class="table-box">
-        <div class="table-title">
-            帖子明细下钻
-            <span class="table-tip">
-                <span class="filter-label">板块筛选</span>
-                <select class="filter-select" id="filter-cate-2"></select>
-            </span>
-        </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>帖子ID</th>
-                        <th>帖子主题</th>
-                        <th>帖主ID</th>
-                        <th>帖主类型</th>
-                        <th>所属板块</th>
-                        <th>发帖日期</th>
-                        <th>累计浏览量</th>
-                        <th>累计获赞</th>
-                        <th>累计评论</th>
-                        <th>累计分享</th>
-                        <th>单帖互动率</th>
-                        <th>传播系数</th>
-                    </tr>
-                </thead>
-                <tbody id="post-body"></tbody>
-            </table>
+        <div class="table-box">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>帖子 ID</th>
+                            <th>主题</th>
+                            <th>帖主 ID</th>
+                            <th>帖主类型</th>
+                            <th>所属板块</th>
+                            <th>发帖日期</th>
+                            <th>累计浏览量</th>
+                            <th>累计获赞</th>
+                            <th>累计评论</th>
+                            <th>累计分享</th>
+                            <th>单帖互动率</th>
+                            <th>传播系数</th>
+                        </tr>
+                    </thead>
+                    <tbody id="post-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // ==================== 模拟脱敏数据（10天，UV与PV走势分化） ====================
-        const dateList = ['10-29','10-30','10-31','11-01','11-02','11-03','11-04','11-05','11-06','11-07'];
-        const uvData = [10200, 10850, 11200, 10980, 11650, 12100, 11800, 12458, 13021, 12680];
-        const pvData = [30600, 34720, 32480, 34038, 38445, 34485, 35990, 38371, 41016, 39435];
-        const postData = [268, 285, 296, 282, 310, 322, 305, 326, 345, 332];
-        const interactUserData = [1420, 1560, 1620, 1540, 1780, 1850, 1700, 1890, 2010, 1950];
-        const avgPagesData = [3.00, 3.20, 2.90, 3.10, 3.30, 2.85, 3.05, 3.08, 3.15, 3.11];
-        const avgTimeData = [255, 268, 260, 264, 275, 258, 266, 272, 280, 275];
+        // ==================== 数据层 ====================
+        // ===DATA_START===
+        const DATA_START = new Date(2025, 10, 1);
+        const DATA_END = new Date(2026, 10, 23);
+        const ALL = '全部板块';
 
-        // 板块汇总：补全UV、分项互动、爆款数
-        const categoryData = [
-            { name: '经验分享', uv: 4860, posts: 86, users: 78, likes: 986, comments: 320, shares: 214, rate: '18.6%', hot: 6 },
-            { name: '问题求助', uv: 3980, posts: 72, users: 65, likes: 542, comments: 410, shares: 68, rate: '14.2%', hot: 2 },
-            { name: '日常打卡', uv: 4220, posts: 68, users: 62, likes: 768, comments: 186, shares: 96, rate: '21.0%', hot: 4 },
-            { name: '话题讨论', uv: 3650, posts: 54, users: 48, likes: 702, comments: 386, shares: 172, rate: '17.8%', hot: 5 },
-            { name: '资源分享', uv: 2840, posts: 46, users: 41, likes: 436, comments: 142, shares: 268, rate: '12.6%', hot: 3 }
+        // 比率类字段（irate / prate / d1 / d7）统一以小数存储
+        const BOARDS = [
+            { name: '经验分享', uv: 4860, pages: 3.35, time: 282, irate: 0.186, prate: 0.0160, ppu: 1.12, likes: 11.5, comments: 3.7, shares: 2.5, d1: 0.612, d7: 0.289 },
+            { name: '问题求助', uv: 3980, pages: 3.60, time: 295, irate: 0.142, prate: 0.0163, ppu: 1.11, likes: 7.5, comments: 5.7, shares: 0.9, d1: 0.596, d7: 0.274 },
+            { name: '日常打卡', uv: 4220, pages: 2.85, time: 252, irate: 0.210, prate: 0.0147, ppu: 1.10, likes: 11.3, comments: 2.7, shares: 1.4, d1: 0.583, d7: 0.261 },
+            { name: '话题讨论', uv: 3650, pages: 3.30, time: 279, irate: 0.178, prate: 0.0132, ppu: 1.13, likes: 13.0, comments: 7.1, shares: 3.2, d1: 0.604, d7: 0.281 },
+            { name: '资源分享', uv: 2840, pages: 3.15, time: 265, irate: 0.126, prate: 0.0144, ppu: 1.12, likes: 9.5, comments: 3.1, shares: 5.8, d1: 0.570, d7: 0.247 }
         ];
 
-        // 帖子明细：12条，补全主题、帖主类型、互动率、传播系数
-        const postDataList = [
-            { id: 'P10098', topic: '经验总结', uid: 'U2001', utype: 'KOL', cate: '经验分享', date: '2026-11-07', views: 1380, likes: 132, comments: 35, shares: 17 },
-            { id: 'P10099', topic: '日常打卡', uid: 'U2002', utype: '普通用户', cate: '日常打卡', date: '2026-11-07', views: 890, likes: 98, comments: 19, shares: 9 },
-            { id: 'P10100', topic: '问题求助', uid: 'U2003', utype: '普通用户', cate: '问题求助', date: '2026-11-07', views: 540, likes: 47, comments: 29, shares: 4 },
-            { id: 'P10101', topic: '话题讨论', uid: 'U2004', utype: 'KOL', cate: '话题讨论', date: '2026-11-07', views: 980, likes: 92, comments: 45, shares: 13 },
-            { id: 'P10102', topic: '资源分享', uid: 'U2005', utype: '官方号', cate: '资源分享', date: '2026-11-06', views: 1680, likes: 76, comments: 16, shares: 26 },
-            { id: 'P10103', topic: '经验总结', uid: 'U2006', utype: 'KOL', cate: '经验分享', date: '2026-11-06', views: 1920, likes: 162, comments: 51, shares: 21 },
-            { id: 'P10104', topic: '日常打卡', uid: 'U2007', utype: '普通用户', cate: '日常打卡', date: '2026-11-06', views: 720, likes: 66, comments: 13, shares: 6 },
-            { id: 'P10105', topic: '活动参与', uid: 'U2008', utype: 'KOL', cate: '话题讨论', date: '2026-11-05', views: 1180, likes: 118, comments: 59, shares: 16 },
-            { id: 'P10106', topic: '问题求助', uid: 'U2009', utype: '普通用户', cate: '问题求助', date: '2026-11-05', views: 450, likes: 40, comments: 24, shares: 2 },
-            { id: 'P10107', topic: '资源分享', uid: 'U2010', utype: '官方号', cate: '资源分享', date: '2026-11-05', views: 2240, likes: 94, comments: 22, shares: 32 },
-            { id: 'P10108', topic: '经验总结', uid: 'U2011', utype: 'KOL', cate: '经验分享', date: '2026-11-04', views: 1580, likes: 124, comments: 38, shares: 18 },
-            { id: 'P10109', topic: '话题讨论', uid: 'U2012', utype: '普通用户', cate: '话题讨论', date: '2026-11-04', views: 1040, likes: 85, comments: 41, shares: 11 }
+        const TOPICS = {
+            '经验分享': ['经验总结', '项目复盘', '学习方法', '工具推荐', '踩坑记录'],
+            '问题求助': ['选 offer 求助', '简历求改', '业务指标请教', '面试求助', '笔试题讨论'],
+            '日常打卡': ['早起打卡', '健身打卡', '读书打卡', '学习打卡', '周计划打卡'],
+            '话题讨论': ['行业热点', '薪资话题', '职场沟通', '周末安排', '产品体验'],
+            '资源分享': ['资料整理', '模板分享', '课程推荐', '书单', '工具清单']
+        };
+
+        const SUM_FIELDS = ['uv', 'pv', 'iu', 'pu', 'posts', 'likes', 'comments', 'shares', 'hot'];
+        // “全部板块”下用户会跨板块访问，去重类指标按重合程度折减；内容类指标直接加总
+        const OVERLAP = { uv: 0.649, iu: 0.74, pu: 0.93 };
+        // 周期拉长后同一用户重复访问，UV 类指标按 天数^0.68 去重
+        const DEDUPE_EXP = 0.68;
+
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+        function fmtMD(d) { return pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+        function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+        function mulberry32(a) {
+            return function () {
+                a |= 0; a = a + 0x6D2B79F5 | 0;
+                let t = Math.imul(a ^ a >>> 15, 1 | a);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+        // ---------- 逐日底表：所有周期、所有板块的指标都由它聚合而来 ----------
+        function genDaily() {
+            const rng = mulberry32(hashStr('daily-v3'));
+            const noise = amp => 1 + (rng() - 0.5) * 2 * amp;
+            const days = [];
+            for (let d = new Date(DATA_START); d <= DATA_END; d = addDays(d, 1)) days.push(new Date(d));
+            const n = days.length;
+            const boards = BOARDS.map(b => Object.assign({ name: b.name }, emptyDaily()));
+            const dau = [];
+
+            days.forEach((d, i) => {
+                const dow = d.getDay();
+                const weekend = (dow === 0 || dow === 6) ? 1.10 : 1;
+                const wave = 1 + 0.03 * Math.sin(i / 23) + 0.02 * Math.sin(i / 61 + 1);
+                const trend = 1 + 0.10 * (i / (n - 1));
+                dau.push(52600 * trend * wave * noise(0.015));
+
+                BOARDS.forEach((b, k) => {
+                    const r = boards[k];
+                    const uv = b.uv * trend * wave * weekend * noise(0.035);
+                    const iuRate = b.irate * noise(0.03);
+                    const puRate = b.prate * noise(0.04);
+                    const iu = uv * iuRate, pu = uv * puRate;
+                    const posts = pu * b.ppu * noise(0.03);
+                    const drift = 1 + 0.03 * (i / (n - 1));
+                    r.uv.push(uv); r.pv.push(uv * b.pages * noise(0.04)); r.time.push(b.time * noise(0.015));
+                    r.iu.push(iu); r.iuRate.push(iuRate); r.pu.push(pu); r.puRate.push(puRate);
+                    r.posts.push(posts); r.likes.push(posts * b.likes * noise(0.08));
+                    r.comments.push(posts * b.comments * noise(0.08)); r.shares.push(posts * b.shares * noise(0.10));
+                    r.hot.push(posts * 0.07 * noise(0.15));
+                    r.d1.push(b.d1 * drift * noise(0.008)); r.d7.push(b.d7 * drift * noise(0.010));
+                });
+            });
+            return { days: days, dau: dau, boards: boards };
+        }
+        function emptyDaily() {
+            const o = {};
+            ['uv', 'pv', 'time', 'iu', 'iuRate', 'pu', 'puRate', 'posts', 'likes', 'comments', 'shares', 'hot', 'd1', 'd7'].forEach(k => o[k] = []);
+            return o;
+        }
+        const DAILY = genDaily();
+
+        // ---------- 周期划分 ----------
+        // day：区间内每一天；week：与区间相交的自然周（周一~周日）；month：与区间相交的自然月。被截断的标记 partial
+        function buildPeriods(g, start, end) {
+            const out = [];
+            if (g === 'day') {
+                for (let d = new Date(start); d <= end; d = addDays(d, 1)) out.push({ start: new Date(d), end: new Date(d), label: fmtMD(d) });
+            } else if (g === 'week') {
+                const firstMonday = addDays(start, -((start.getDay() + 6) % 7));
+                for (let ws = firstMonday; ws <= end; ws = addDays(ws, 7)) {
+                    const we = addDays(ws, 6);
+                    const s = ws < start ? new Date(start) : new Date(ws);
+                    const e = we > end ? new Date(end) : new Date(we);
+                    const partial = !(s.getTime() === ws.getTime() && e.getTime() === we.getTime());
+                    out.push({ start: s, end: e, partial: partial, label: fmtMD(s) + '~' + fmtMD(e) + (partial ? '*' : '') });
+                }
+            } else {
+                let ms = new Date(start.getFullYear(), start.getMonth(), 1);
+                for (; ms <= end; ms = new Date(ms.getFullYear(), ms.getMonth() + 1, 1)) {
+                    const me = new Date(ms.getFullYear(), ms.getMonth() + 1, 0);
+                    const s = ms < start ? new Date(start) : new Date(ms);
+                    const e = me > end ? new Date(end) : new Date(me);
+                    const partial = !(s.getTime() === ms.getTime() && e.getTime() === me.getTime());
+                    out.push({ start: s, end: e, partial: partial, label: ms.getFullYear() + '-' + pad(ms.getMonth() + 1) + (partial ? '*' : '') });
+                }
+            }
+            return out;
+        }
+
+        // ---------- 周期聚合 ----------
+        function aggPeriod(scope, p) {
+            const rows = scope === ALL ? DAILY.boards : [DAILY.boards.find(b => b.name === scope)];
+            const ov = scope === ALL ? OVERLAP : { uv: 1, iu: 1, pu: 1 };
+            const idx = [];
+            DAILY.days.forEach((d, i) => { if (d >= p.start && d <= p.end) idx.push(i); });
+            const k = Math.max(idx.length, 1), f = Math.pow(k, DEDUPE_EXP);
+            const s = {}; SUM_FIELDS.forEach(x => s[x] = 0);
+            let sumTime = 0, sumDau = 0, wD1 = 0, wD7 = 0, wUv = 0;
+            rows.forEach(r => idx.forEach(i => {
+                SUM_FIELDS.forEach(x => s[x] += r[x][i]);
+                sumTime += r.uv[i] * r.time[i]; wUv += r.uv[i];
+                wD1 += r.uv[i] * r.d1[i]; wD7 += r.uv[i] * r.d7[i];
+            }));
+            idx.forEach(i => { sumDau += DAILY.dau[i]; });
+            const uv = s.uv / k * ov.uv * f, iu = s.iu / k * ov.iu * f, pu = s.pu / k * ov.pu * f, dau = sumDau / k * f;
+            return {
+                uv: uv, pv: s.pv, pages: s.pv / uv, time: sumTime / uv,
+                iu: iu, iuRate: iu / uv, pu: pu, puRate: pu / uv,
+                posts: s.posts, likes: s.likes, comments: s.comments, shares: s.shares, hot: s.hot,
+                dau: dau, pen: uv / dau,
+                d1: addDays(p.end, 1) <= DATA_END ? wD1 / wUv : null,
+                d7: addDays(p.end, 7) <= DATA_END ? wD7 / wUv : null
+            };
+        }
+
+        function aggSeries(scope, periods) { return periods.map(p => aggPeriod(scope, p)); }
+
+        function cmpLabel(g) { return g === 'day' ? '较前一日' : g === 'week' ? '较上周' : '较上月'; }
+
+        // ---------- 帖子明细（当前周期内） ----------
+        function genPosts(scope, p) {
+            const days = Math.round((p.end - p.start) / 86400000) + 1;
+            const count = Math.min(60, 10 + days * 4);
+            const rng = mulberry32(hashStr('post-' + scope + '-' + fmtDate(p.start) + '-' + fmtDate(p.end)));
+            const pick = arr => arr[Math.floor(rng() * arr.length)];
+            const list = [];
+            for (let i = 0; i < count; i++) {
+                const b = scope === ALL ? BOARDS[Math.floor(rng() * BOARDS.length)] : BOARDS.find(x => x.name === scope);
+                const utype = rng() < (b.name === '资源分享' ? 0.35 : 0.14) ? '官方号' : (rng() < 0.32 ? 'KOL' : '普通用户');
+                const views = Math.round(700 * Math.exp((rng() + rng() + rng() - 1.5) * 1.4));
+                const likes = Math.round(views * (0.045 + rng() * 0.05));
+                const comments = Math.round(likes * (0.25 + rng() * 0.2));
+                const shares = Math.round(likes * (b.shares / b.likes) * (0.6 + rng() * 0.8));
+                list.push({
+                    id: 'P' + (10200 + i * 7 + Math.floor(rng() * 6)), topic: pick(TOPICS[b.name]),
+                    uid: 'U' + (2000 + Math.floor(rng() * 900)), utype: utype, cate: b.name,
+                    date: fmtDate(addDays(p.start, Math.floor(rng() * days))),
+                    views: views, likes: likes, comments: comments, shares: shares
+                });
+            }
+            list.sort((a, b) => b.views - a.views);
+            return list;
+        }
+        // ===DATA_END===
+
+        // ==================== 格式化 ====================
+        // 口径：小数统一 2 位；百分数统一 1 位；人数/次数等计数取整
+        const fInt = v => v == null ? '—' : Math.round(v).toLocaleString();
+        const fPct = v => v == null ? '—' : (v * 100).toFixed(1) + '%';
+        const fNum2 = v => v == null ? '—' : v.toFixed(2);
+        const fTime = v => v == null ? '—' : Math.floor(v / 60) + ' 分 ' + pad(Math.round(v % 60)) + ' 秒';
+        const FMT = { int: fInt, pct1: fPct, num2: fNum2, time: fTime };
+
+        function changeHtml(cur, prev, type) {
+            if (cur == null || prev == null) return '<span class="flat">—</span>';
+            const diff = type === 'pp' ? (cur - prev) * 100 : (cur - prev) / prev * 100;
+            if (Math.abs(diff) < 0.05) return '<span class="flat">持平</span>';
+            const cls = diff > 0 ? 'up' : 'down', arrow = diff > 0 ? '↑' : '↓';
+            return '<span class="kpi-change ' + cls + '">' + arrow + Math.abs(diff).toFixed(1) + (type === 'pp' ? 'pp' : '%') + '</span>';
+        }
+
+        const CARD_DEFS = [
+            { group: '流量', color: '#2563eb', items: [
+                { key: 'uv', label: '社区 UV', def: '统计周期内访问社区板块的去重用户数', fmt: 'int', cmp: 'pct' },
+                { key: 'pen', label: '平台渗透率', def: '社区 UV ÷ 平台 DAU', fmt: 'pct1', cmp: 'pp' } ] },
+            { group: '浏览深度', color: '#0891b2', items: [
+                { key: 'time', label: '人均停留时长', def: '社区总停留时长 ÷ 社区 UV', fmt: 'time', cmp: 'pct' },
+                { key: 'pages', label: '人均浏览页数', def: '社区 PV ÷ 社区 UV', fmt: 'num2', cmp: 'pct' } ] },
+            { group: '互动', color: '#d97706', items: [
+                { key: 'iu', label: '互动用户数', def: '统计周期内产生点赞、评论或分享的去重用户数', fmt: 'int', cmp: 'pct' },
+                { key: 'iuRate', label: '互动率', def: '互动用户数 ÷ 社区 UV', fmt: 'pct1', cmp: 'pp' } ] },
+            { group: '内容生产', color: '#7c3aed', items: [
+                { key: 'pu', label: '发帖用户数', def: '统计周期内发布帖子的去重用户数', fmt: 'int', cmp: 'pct' },
+                { key: 'puRate', label: '发帖渗透率', def: '发帖用户数 ÷ 社区 UV', fmt: 'pct1', cmp: 'pp' } ] }
         ];
-        // ==================== 板块汇总表渲染 ====================
-        let currentCate = '经验分享';
 
-        function renderCategoryTable() {
-            const list = currentCate === '全部板块'
-                ? categoryData
-                : categoryData.filter(c => c.name === currentCate);
-            const tbody = document.getElementById('category-body');
-            tbody.innerHTML = list.map(item => `
-                <tr data-cate="${item.name}">
-                    <td>${item.name}</td>
-                    <td>${item.uv.toLocaleString()}</td>
-                    <td>${item.posts}</td>
-                    <td>${item.users}</td>
-                    <td>${item.likes}</td>
-                    <td>${item.comments}</td>
-                    <td>${item.shares}</td>
-                    <td>${item.rate}</td>
-                    <td>${item.hot}</td>
-                </tr>
-            `).join('');
+        // ==================== 状态 ====================
+        const state = { g: 'day', scope: ALL, start: new Date(2026, 10, 1), end: new Date(2026, 10, 20) };
+        const charts = {};
+        function chart(id) { if (!charts[id]) charts[id] = echarts.init(document.getElementById(id)); return charts[id]; }
+        function col(rows, key) { return rows.map(r => r[key]); }
 
-            tbody.querySelectorAll('tr').forEach(tr => {
-                tr.addEventListener('click', () => setCate(tr.dataset.cate));
+        // ==================== 渲染：头部 ====================
+        function renderHeader(periods) {
+            const last = periods[periods.length - 1];
+            const range = state.g === 'day' ? fmtDate(last.end) : fmtDate(last.start) + ' ~ ' + fmtDate(last.end).slice(5);
+            const tag = (last.partial ? '不完整周期，' : '') + cmpLabel(state.g);
+            const gName = { day: '日', week: '周', month: '月' }[state.g];
+            document.getElementById('header-period').textContent = '当前周期：' + gName + ' · ' + range + '（' + tag + '）';
+        }
+
+        // ==================== 渲染：核心指标 ====================
+        function renderKpi(rows) {
+            const n = rows.length, cur = rows[n - 1], prev = n > 1 ? rows[n - 2] : null;
+            document.getElementById('kpi-groups').innerHTML = CARD_DEFS.map(gr => `
+                <div class="kpi-group">
+                    <div class="group-label"><span class="group-dot" style="background:${gr.color}"></span>${gr.group}</div>
+                    ${gr.items.map(it => `
+                        <div class="kpi-card">
+                            <div class="kpi-label">${it.label}<span class="kpi-info" title="${it.def}">i</span></div>
+                            <div class="kpi-value">${FMT[it.fmt](cur[it.key])}</div>
+                            <div class="kpi-foot">${prev ? changeHtml(cur[it.key], prev[it.key], it.cmp) : '<span class="flat">—</span>'}<span>${cmpLabel(state.g)}</span></div>
+                        </div>`).join('')}
+                </div>`).join('');
+        }
+
+        // ==================== 图表公共 ====================
+        const axisLine = { lineStyle: { color: '#9ca3af' } };
+        const splitLine = { lineStyle: { color: '#f3f4f6' } };
+        const grid = { left: 76, right: 76, top: 45, bottom: 40 };
+        const uInt = v => v == null ? '—' : Math.round(v).toLocaleString();
+        const uPct = v => v == null ? '—' : (v * 100).toFixed(1) + '%';
+
+        function axisTip(units) {
+            return { trigger: 'axis', formatter: ps => {
+                let s = ps[0].axisValue.replace('*', '（不完整周期）') + '<br/>';
+                ps.forEach(p => { s += p.marker + p.seriesName + '：' + (units[p.seriesName] || (v => v))(p.value) + '<br/>'; });
+                return s;
+            } };
+        }
+        // 刻度标签：≥1 万统一用“万”，同一根轴单位一致
+        function autoFmt(maxV) { return maxV >= 10000 ? v => (v / 10000).toFixed(2) + '万' : v => v.toLocaleString(); }
+        // 下面两个是“格式化器工厂”：niceAxis 用该轴最大值调用一次，返回真正的刻度格式化函数
+        const pagesFmt = () => v => v.toFixed(2);
+        const pctFmt = () => v => v.toFixed(1) + '%';
+        const pct = v => v == null ? null : +(v * 100).toFixed(1);
+
+        // 数值轴。柱状图从 0 起，交给图表库；不从 0 起的轴（scale）显式指定刻度：
+        // 步长取 1 / 2 / 2.5 / 5 × 10^n 中使刻度不超过 6 个的最小值，两端各留一个步长空白，保证等距且整齐
+        function niceAxis(data, o) {
+            o = o || {};
+            const v = data.filter(x => x != null);
+            const maxV = v.length ? Math.max.apply(null, v) : 1;
+            const axis = {
+                type: 'value',
+                splitLine: o.noGrid ? { show: false } : splitLine,
+                axisLine: { show: false }, axisTick: { show: false },
+                axisLabel: { formatter: o.fmt ? o.fmt(maxV) : autoFmt(maxV) }
+            };
+            if (o.color) axis.axisLabel.color = o.color;
+            if (!o.scale || !v.length) return axis;
+            const lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+            const raw = (hi - lo) / 4 || Math.abs(hi) * 0.2 || 1;
+            // 步长只在 1 / 2 / 2.5 / 5 × 10^n 里选，且小数位不能超过标签保留的小数位（否则相邻刻度四舍五入后重名）。
+            // 从最细的开始逐个试，取第一个能让“两端各留一步空白后，刻度间隔仍不超过 6 个”的步长
+            // 标签保留几位小数：页数 2 位、百分数 1 位；“万”单位保留 2 位相当于步长至少 100，整数轴步长至少 1
+            const dec = o.dec != null ? o.dec : (o.fmt ? 6 : (maxV >= 10000 ? -2 : 0)), k = Math.pow(10, dec);
+            const mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+            const cands = [1, 2, 2.5, 5, 10, 20, 25, 50, 100].map(m => m * mag)
+                .filter(s => Math.abs(s * k - Math.round(s * k)) < 1e-6);
+            const step = cands.find(s => Math.ceil((hi + s) / s - 1e-9) - Math.floor((lo - s) / s + 1e-9) <= 6) || cands[cands.length - 1];
+            const fix = x => +x.toFixed(Math.max(0, Math.min(6, dec)));
+            axis.min = fix(Math.floor((lo - step) / step) * step);
+            axis.max = fix(Math.ceil((hi + step) / step) * step);
+            axis.interval = step;
+            return axis;
+        }
+        // 百分数轴（数据已是百分数单位），刻度文字与对应折线同色便于区分左右轴
+        function pctAxis(data, color) {
+            const a = niceAxis(data, { scale: true, fmt: pctFmt, dec: 1, color: color });
+            if (a.min == null) { a.min = 0; a.max = 100; a.interval = 25; }
+            return a;
+        }
+        function setDual(id, x, units, left, right, layout) {
+            const mk = (s, yi) => Object.assign({ name: s.name, type: s.type, data: s.data, symbol: 'circle', symbolSize: 6, barWidth: 18, yAxisIndex: yi }, s.extra || {});
+            chart(id).setOption({
+                tooltip: axisTip(units), legend: { right: 10, top: 0 }, grid: layout || grid, color: [left.color, right.color],
+                xAxis: { type: 'category', data: x, axisLine: axisLine, axisTick: { show: false }, axisLabel: { fontSize: 11, hideOverlap: true } },
+                yAxis: [niceAxis(left.data, left.axis), niceAxis(right.data, Object.assign({ noGrid: true }, right.axis))],
+                series: [mk(left, 0), mk(right, 1)]
+            }, true);
+        }
+
+        function renderTrends(rows, periods) {
+            const x = periods.map(p => p.label), cur = rows[rows.length - 1];
+
+            setDual('chart-uvpv', x, { 'UV': uInt, 'PV': uInt },
+                { name: 'UV', type: 'line', data: col(rows, 'uv'), color: '#2563eb', axis: { scale: true } },
+                { name: 'PV', type: 'line', data: col(rows, 'pv'), color: '#059669', axis: { scale: true } });
+
+            setDual('chart-depth', x, { '人均浏览页数': v => v.toFixed(2) + ' 页', '人均停留时长': fTime },
+                { name: '人均浏览页数', type: 'bar', data: col(rows, 'pages').map(v => +v.toFixed(2)), color: '#0891b2', axis: { scale: true, fmt: pagesFmt, dec: 2 } },
+                { name: '人均停留时长', type: 'line', data: col(rows, 'time'), color: '#d97706', axis: { scale: true } });
+
+            setDual('chart-interact', x, { '互动用户数': uInt, '互动率': v => v.toFixed(1) + '%' },
+                { name: '互动用户数', type: 'bar', data: col(rows, 'iu'), color: '#d97706' },
+                { name: '互动率', type: 'line', data: col(rows, 'iuRate').map(pct), color: '#b45309', axis: { scale: true, fmt: pctFmt, dec: 1 } },
+                { left: 64, right: 64, top: 45, bottom: 40 });
+
+            chart('chart-pie').setOption({
+                tooltip: { trigger: 'item', formatter: p => p.name + '：' + uInt(p.value) + ' 次（' + p.percent.toFixed(1) + '%）' },
+                legend: { bottom: 0, left: 'center' }, color: ['#2563eb', '#059669', '#d97706'],
+                series: [{
+                    type: 'pie', radius: ['45%', '68%'], center: ['50%', '45%'],
+                    itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                    label: { formatter: p => p.percent.toFixed(1) + '%', fontSize: 12 },
+                    data: [
+                        { value: Math.round(cur.likes), name: '点赞' },
+                        { value: Math.round(cur.comments), name: '评论' },
+                        { value: Math.round(cur.shares), name: '分享' }
+                    ]
+                }]
+            }, true);
+
+            setDual('chart-post', x, { '发帖量': v => uInt(v) + ' 篇', '发帖用户数': v => uInt(v) + ' 人' },
+                { name: '发帖量', type: 'bar', data: col(rows, 'posts'), color: '#7c3aed' },
+                { name: '发帖用户数', type: 'line', data: col(rows, 'pu'), color: '#2563eb', axis: { scale: true } });
+
+            // 留存：双轴。次留与 7 留量级相差一倍以上，共用一根轴会把 7 留压成贴底直线
+            const d1 = col(rows, 'd1').map(pct), d7 = col(rows, 'd7').map(pct);
+            chart('chart-retention').setOption({
+                tooltip: axisTip({ '次日留存率': v => v.toFixed(1) + '%', '7 日留存率': v => v.toFixed(1) + '%' }),
+                legend: { right: 10, top: 0 }, grid: grid, color: ['#7c3aed', '#dc2626'],
+                xAxis: { type: 'category', data: x, axisLine: axisLine, axisTick: { show: false }, axisLabel: { fontSize: 11, hideOverlap: true } },
+                yAxis: [pctAxis(d1, '#7c3aed'), Object.assign(pctAxis(d7, '#dc2626'), { splitLine: { show: false } })],
+                series: [
+                    { name: '次日留存率', type: 'line', data: d1, symbol: 'circle', symbolSize: 6 },
+                    { name: '7 日留存率', type: 'line', data: d7, symbol: 'circle', symbolSize: 6, yAxisIndex: 1 }
+                ]
+            }, true);
+        }
+
+        // ==================== 渲染：板块对比 ====================
+        function renderBoards(periods) {
+            const n = periods.length, cur = periods[n - 1], prev = n > 1 ? periods[n - 2] : null;
+            const data = BOARDS.map(b => ({ name: b.name, cur: aggPeriod(b.name, cur), prev: prev ? aggPeriod(b.name, prev) : null }));
+            const sorted = data.slice().sort((a, b) => a.cur.iuRate - b.cur.iuRate);
+            chart('chart-cate-bar').setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: ps => ps[0].name + '：' + ps[0].value.toFixed(1) + '%' },
+                grid: { left: 70, right: 56, top: 15, bottom: 25 },
+                // 条形图的横轴从 0 起，避免截断坐标轴夸大板块间差异
+                xAxis: { type: 'value', min: 0, axisLabel: { formatter: pctFmt() }, splitLine: splitLine, axisLine: { show: false }, axisTick: { show: false } },
+                yAxis: { type: 'category', data: sorted.map(b => b.name), axisLine: axisLine, axisTick: { show: false } },
+                series: [{
+                    type: 'bar', barWidth: 18,
+                    data: sorted.map(b => ({ value: +pct(b.cur.iuRate), itemStyle: { color: state.scope === ALL || b.name === state.scope ? '#2563eb' : '#c7d2fe' } })),
+                    label: { show: true, position: 'right', formatter: p => p.value.toFixed(1) + '%', fontSize: 12, color: '#374151' }
+                }]
+            }, true);
+            document.getElementById('board-meta').textContent = '统计周期：' + (state.g === 'day' ? fmtDate(cur.end) : fmtDate(cur.start) + ' ~ ' + fmtDate(cur.end)) + ' · 点击表格行可切换板块';
+
+            document.getElementById('category-body').innerHTML = data.map(b => {
+                const chg = b.prev ? (b.cur.uv - b.prev.uv) / b.prev.uv * 100 : null;
+                return `<tr class="selectable ${b.name === state.scope ? 'active' : ''}" data-cate="${b.name}">
+                    <td>${b.name}</td>
+                    <td>${fInt(b.cur.uv)}</td>
+                    <td class="${chg == null ? 'flat' : chg >= 0 ? 'cell-up' : 'cell-down'}">${chg == null ? '—' : (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%'}</td>
+                    <td>${fInt(b.cur.posts)}</td>
+                    <td>${fInt(b.cur.pu)}</td>
+                    <td>${fInt(b.cur.likes)}</td>
+                    <td>${fInt(b.cur.comments)}</td>
+                    <td>${fInt(b.cur.shares)}</td>
+                    <td>${fPct(b.cur.iuRate)}</td>
+                    <td>${Math.round(b.cur.hot)}</td>
+                </tr>`;
+            }).join('');
+            document.querySelectorAll('#category-body tr').forEach(tr => {
+                tr.addEventListener('click', () => setScope(tr.dataset.cate));
             });
         }
 
-        // 初始化两个下拉筛选框
-        function initFilters() {
-            const options = ['全部板块'].concat(categoryData.map(c => c.name));
-            ['filter-cate-1', 'filter-cate-2'].forEach(id => {
-                const sel = document.getElementById(id);
-                sel.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
-                sel.value = currentCate;
-                sel.addEventListener('change', () => setCate(sel.value));
-            });
-        }
-
-        // 统一筛选状态：两个下拉框、汇总表、明细表联动
-        function setCate(cate) {
-            currentCate = cate;
-            document.getElementById('filter-cate-1').value = cate;
-            document.getElementById('filter-cate-2').value = cate;
-            renderCategoryTable();
-            renderPostTable(cate === '全部板块' ? null : cate);
-        }
-
-        // ==================== 帖子明细表渲染 ====================
-        function renderPostTable(cate) {
-            const list = cate ? postDataList.filter(p => p.cate === cate) : postDataList;
-            const tbody = document.getElementById('post-body');
-            tbody.innerHTML = list.map(item => {
-                const interactRate = ((item.likes + item.comments + item.shares) / item.views * 100).toFixed(1) + '%';
-                const spreadRate = (item.shares / item.views * 100).toFixed(1) + '%';
-                return `
-                    <tr>
-                        <td>${item.id}</td>
-                        <td style="white-space:normal;min-width:140px">${item.topic}</td>
-                        <td>${item.uid}</td>
-                        <td>${item.utype}</td>
-                        <td>${item.cate}</td>
-                        <td>${item.date}</td>
-                        <td>${item.views.toLocaleString()}</td>
-                        <td>${item.likes}</td>
-                        <td>${item.comments}</td>
-                        <td>${item.shares}</td>
-                        <td>${interactRate}</td>
-                        <td>${spreadRate}</td>
-                    </tr>`;
+        // ==================== 渲染：帖子明细 ====================
+        function renderPosts(periods) {
+            const p = periods[periods.length - 1];
+            const list = genPosts(state.scope, p);
+            document.getElementById('post-meta').textContent = '统计周期：' + (state.g === 'day' ? fmtDate(p.end) : fmtDate(p.start) + ' ~ ' + fmtDate(p.end)) + ' · 共 ' + list.length + ' 条，按累计浏览量降序';
+            document.getElementById('post-body').innerHTML = list.map(x => {
+                const interact = (x.likes + x.comments + x.shares) / x.views * 100;
+                const spread = x.shares / x.views * 100;
+                return `<tr>
+                    <td>${x.id}</td>
+                    <td>${x.topic}</td>
+                    <td>${x.uid}</td>
+                    <td>${x.utype}</td>
+                    <td>${x.cate}</td>
+                    <td>${x.date}</td>
+                    <td>${x.views.toLocaleString()}</td>
+                    <td>${x.likes}</td>
+                    <td>${x.comments}</td>
+                    <td>${x.shares}</td>
+                    <td>${interact.toFixed(1)}%</td>
+                    <td>${spread.toFixed(1)}%</td>
+                </tr>`;
             }).join('');
         }
 
-        // 通用坐标轴样式（PowerBI风格：直线、无刻度线、淡网格）
-        const axisLineStyle = { lineStyle: { color: '#999' } };
-        const splitLineStyle = { lineStyle: { color: '#eee' } };
+        // ==================== 交互 ====================
+        function renderAll() {
+            const periods = buildPeriods(state.g, state.start, state.end);
+            const rows = aggSeries(state.scope, periods);
+            renderHeader(periods);
+            renderKpi(rows);
+            renderTrends(rows, periods);
+            renderBoards(periods);
+            renderPosts(periods);
+        }
+        function setScope(scope) {
+            state.scope = scope;
+            document.getElementById('global-cate').value = scope;
+            renderAll();
+        }
+        function setGran(g) {
+            state.g = g;
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.toggle('active', b.dataset.type === g));
+            renderAll();
+        }
+        function parseDate(v) {
+            const a = v.split('-').map(Number);
+            return new Date(a[0], a[1] - 1, a[2]);
+        }
+        function setRange(s, e) {
+            let adjusted = false;
+            if (isNaN(s.getTime())) { s = new Date(DATA_START); adjusted = true; }
+            if (isNaN(e.getTime())) { e = new Date(DATA_END); adjusted = true; }
+            if (s < DATA_START) { s = new Date(DATA_START); adjusted = true; }
+            if (e > DATA_END) { e = new Date(DATA_END); adjusted = true; }
+            if (s > e) { const t = s; s = e; e = t; adjusted = true; }
+            state.start = s; state.end = e;
+            document.getElementById('date-start').value = fmtDate(s);
+            document.getElementById('date-end').value = fmtDate(e);
+            document.getElementById('range-hint').textContent = adjusted ? '起止日期已按数据区间（' + fmtDate(DATA_START) + ' ~ ' + fmtDate(DATA_END) + '）自动调整' : '';
+            renderAll();
+        }
 
-        // ==================== 图表1：UV/PV（双轴，走势已分化） ====================
-        const uvChart = echarts.init(document.getElementById('chart-uvpv'));
-        uvChart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                formatter: function (params) {
-                    let s = params[0].axisValue + '<br/>';
-                    params.forEach(p => {
-                        const unit = p.seriesName === 'UV' ? ' 人' : ' 次';
-                        s += p.marker + p.seriesName + '：' + p.value.toLocaleString() + unit + '<br/>';
-                    });
-                    return s;
-                }
-            },
-            legend: { data: ['UV', 'PV'], right: 10, top: 0 },
-            grid: { left: 82, right: 82, top: 45, bottom: 35 },
-            color: ['#0078d4', '#107c10'],
-            xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
-            yAxis: [
-                { type: 'value', splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
-                { type: 'value', splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
-            ],
-            series: [
-                { name: 'UV', type: 'line', data: uvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 0 },
-                { name: 'PV', type: 'line', data: pvData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
-            ]
-        });
-
-        // ==================== 图表2：发帖量(柱)/互动用户数(线) ====================
-        const postChart = echarts.init(document.getElementById('chart-post'));
-        postChart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                formatter: function (params) {
-                    let s = params[0].axisValue + '<br/>';
-                    params.forEach(p => {
-                        const unit = p.seriesName === '发帖量' ? ' 篇' : ' 人';
-                        s += p.marker + p.seriesName + '：' + p.value.toLocaleString() + unit + '<br/>';
-                    });
-                    return s;
-                }
-            },
-            legend: { data: ['发帖量', '互动用户数'], right: 10, top: 0 },
-            grid: { left: 82, right: 82, top: 45, bottom: 35 },
-            color: ['#0078d4', '#d83b01'],
-            xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
-            yAxis: [
-                { type: 'value', splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
-                { type: 'value', splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
-            ],
-            series: [
-                { name: '发帖量', type: 'bar', data: postData, barWidth: 22, yAxisIndex: 0 },
-                { name: '互动用户数', type: 'line', data: interactUserData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
-            ]
-        });
-
-        // ==================== 图表3：互动构成（饼上只留百分比，名称看图例） ====================
-        const pieChart = echarts.init(document.getElementById('chart-pie'));
-        pieChart.setOption({
-            tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
-            legend: { bottom: 5, left: 'center' },
-            color: ['#0078d4', '#107c10', '#d83b01'],
-            series: [{
-                type: 'pie',
-                radius: ['45%', '68%'],
-                center: ['50%', '46%'],
-                itemStyle: { borderColor: '#fff', borderWidth: 2 },
-                label: { formatter: '{d}%', fontSize: 12 },
-                data: [
-                    { value: 1280, name: '点赞' },
-                    { value: 420, name: '评论' },
-                    { value: 190, name: '分享' }
-                ]
-            }]
-        });
-
-        // ==================== 图表4：浏览页数(柱)/停留时长(线) ====================
-        const depthChart = echarts.init(document.getElementById('chart-depth'));
-        depthChart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                formatter: function (params) {
-                    let s = params[0].axisValue + '<br/>';
-                    params.forEach(p => {
-                        const unit = p.seriesName === '人均浏览页数' ? ' 页' : ' 秒';
-                        s += p.marker + p.seriesName + '：' + p.value.toLocaleString() + unit + '<br/>';
-                    });
-                    return s;
-                }
-            },
-            legend: { data: ['人均浏览页数', '人均停留时长'], right: 10, top: 0 },
-            grid: { left: 82, right: 82, top: 45, bottom: 35 },
-            color: ['#5c2d91', '#008272'],
-            xAxis: { type: 'category', data: dateList, axisLine: axisLineStyle, axisTick: { show: false } },
-            yAxis: [
-                { type: 'value', min: 2.6, max: 3.4, splitLine: splitLineStyle, axisLine: { show: false }, axisTick: { show: false } },
-                { type: 'value', min: 245, max: 290, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
-            ],
-            series: [
-                { name: '人均浏览页数', type: 'bar', data: avgPagesData, barWidth: 22, yAxisIndex: 0 },
-                { name: '人均停留时长', type: 'line', data: avgTimeData, symbol: 'circle', symbolSize: 7, yAxisIndex: 1 }
-            ]
-        });
-
-        // 自适应
-        window.addEventListener('resize', () => {
-            uvChart.resize();
-            postChart.resize();
-            pieChart.resize();
-            depthChart.resize();
-        });
-
-        // ==================== 时间维度切换（演示用） ====================
-        document.querySelectorAll('.time-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const ratio = btn.dataset.type === 'day' ? 1 : btn.dataset.type === 'week' ? 6.8 : 28.5;
-                document.getElementById('kpi-uv').textContent = Math.round(12680 * ratio).toLocaleString();
-                document.getElementById('kpi-post-user').textContent = Math.round(332 * ratio).toLocaleString();
+        (function init() {
+            const sel = document.getElementById('global-cate');
+            sel.innerHTML = [ALL].concat(BOARDS.map(b => b.name)).map(n => `<option value="${n}">${n}</option>`).join('');
+            sel.addEventListener('change', () => setScope(sel.value));
+            document.querySelectorAll('.time-btn').forEach(btn => btn.addEventListener('click', () => setGran(btn.dataset.type)));
+            ['date-start', 'date-end'].forEach(id => {
+                const el = document.getElementById(id);
+                el.min = fmtDate(DATA_START); el.max = fmtDate(DATA_END);
+                el.addEventListener('change', () => setRange(parseDate(document.getElementById('date-start').value), parseDate(document.getElementById('date-end').value)));
             });
-        });
-
-        // 初始化
-        initFilters();
-        renderCategoryTable();
-        renderPostTable(currentCate);
-
+            window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
+            document.getElementById('date-start').value = fmtDate(state.start);
+            document.getElementById('date-end').value = fmtDate(state.end);
+            renderAll();
+        })();
     </script>
 </body>
 </html>
